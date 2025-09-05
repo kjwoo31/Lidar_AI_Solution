@@ -38,12 +38,16 @@
 #include "common/timer.hpp"
 #include "common/visualize.hpp"
 
+constexpr int IMAGE_NUM = 4;
+constexpr int IMAGE_WIDTH = 640;
+constexpr int IMAGE_HEIGHT = 360;
+
 static std::vector<unsigned char*> load_images(const std::string& root) {
   const char* file_names[] = {"0-FRONT.jpg", "1-FRONT_RIGHT.jpg", "2-FRONT_LEFT.jpg",
                               "3-BACK.jpg",  "4-BACK_LEFT.jpg",   "5-BACK_RIGHT.jpg"};
 
   std::vector<unsigned char*> images;
-  for (int i = 0; i < 6; ++i) {
+  for (int i = 0; i < IMAGE_NUM; ++i) {
     char path[200];
     sprintf(path, "%s/%s", root.c_str(), file_names[i]);
 
@@ -99,8 +103,8 @@ static void visualize(const std::vector<bevfusion::head::transbbox::BoundingBox>
 
   nv::ImageArtistParameter image_artist_param;
   image_artist_param.num_camera = images.size();
-  image_artist_param.image_width = 1600;
-  image_artist_param.image_height = 900;
+  image_artist_param.image_width = IMAGE_WIDTH;
+  image_artist_param.image_height = IMAGE_HEIGHT;
   image_artist_param.image_stride = image_artist_param.image_width * 3;
   image_artist_param.viewport_nx4x4.resize(images.size() * 4 * 4);
   memcpy(image_artist_param.viewport_nx4x4.data(), lidar2image.ptr<float>(),
@@ -124,7 +128,7 @@ static void visualize(const std::vector<bevfusion::head::transbbox::BoundingBox>
     bool xflip = static_cast<bool>(offset_cameras[icamera][2]);
     visualizer->draw_prediction(icamera, predictions, xflip);
 
-    nv::Tensor device_image(std::vector<int>{900, 1600, 3}, nv::DataType::UInt8);
+    nv::Tensor device_image(std::vector<int>{IMAGE_HEIGHT, IMAGE_WIDTH, 3}, nv::DataType::UInt8);
     device_image.copy_from_host(images[icamera], stream);
 
     if (xflip) {
@@ -149,11 +153,11 @@ std::shared_ptr<bevfusion::Core> create_core(const std::string& model, const std
 
   printf("Create by %s, %s\n", model.c_str(), precision.c_str());
   bevfusion::camera::NormalizationParameter normalization;
-  normalization.image_width = 1600;
-  normalization.image_height = 900;
+  normalization.image_width = IMAGE_WIDTH;
+  normalization.image_height = IMAGE_HEIGHT;
   normalization.output_width = 704;
   normalization.output_height = 256;
-  normalization.num_camera = 6;
+  normalization.num_camera = IMAGE_NUM;
   normalization.resize_lim = 0.48f;
   normalization.interpolation = bevfusion::camera::Interpolation::Bilinear;
 
@@ -192,7 +196,7 @@ std::shared_ptr<bevfusion::Core> create_core(const std::string& model, const std
   geometry.image_height = 256;
   geometry.feat_width = 88;
   geometry.feat_height = 32;
-  geometry.num_camera = 6;
+  geometry.num_camera = IMAGE_NUM;
   geometry.geometry_dim = nvtype::Int3(360, 360, 80);
 
   bevfusion::head::transbbox::TransBBoxParameter transbbox;
@@ -201,10 +205,10 @@ std::shared_ptr<bevfusion::Core> create_core(const std::string& model, const std
   transbbox.post_center_range_start = {-61.2, -61.2, -10.0};
   transbbox.post_center_range_end = {61.2, 61.2, 10.0};
   transbbox.voxel_size = {0.075, 0.075};
-  transbbox.model = nv::format("model/%s/build/head.bbox.plan", model.c_str());
+  // transbbox.model = nv::format("model/%s/build/head.bbox.plan", model.c_str());
 
   // if you got an inaccurate boundingbox result please turn on the layernormplugin plan.
-  // transbbox.model = nv::format("model/%s/build/head.bbox.layernormplugin.plan", model.c_str());
+  transbbox.model = nv::format("model/%s/build/head.bbox.layernormplugin.plan", model.c_str());
   transbbox.confidence_threshold = 0.12f;
   transbbox.sorted_bboxes = true;
 
