@@ -112,7 +112,11 @@ def main():
             torch.backends.cudnn.deterministic = True
             torch.backends.cudnn.benchmark = False
 
-    dataset_train  = build_dataset(cfg.data.train)
+    # TODO: Added for custom dataset with CBGSDataset type. Check if it is needed
+    if cfg.data.train['type'] != 'NuScenesDataset':
+        dataset_train  = build_dataset(cfg.data.train['dataset'])
+    else:
+        dataset_train  = build_dataset(cfg.data.train)
     dataset_test   = build_dataset(cfg.data.test)
     print('train nums:{} val nums:{}'.format(len(dataset_train), len(dataset_test)))   
     distributed =False

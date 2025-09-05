@@ -76,6 +76,10 @@ def dump_tensor(args):
             name = os.path.basename(path)
             shutil.copyfile(path, f"{root}/{idx}-{names[idx]}.jpg")
 
+
+        # TODO fix gt_labels_3d to float32
+        data["gt_labels_3d"].data[0][0] = data["gt_labels_3d"].data[0][0].to(torch.float32)
+
         tensor.save(data["img"].data[0].half(), f"{root}/images.tensor", True)
         tensor.save(data["points"].data[0][0].half(), f"{root}/points.tensor", True)
         tensor.save(data["gt_bboxes_3d"].data[0][0].tensor, f"{root}/gt_bboxes_3d.tensor", True)
